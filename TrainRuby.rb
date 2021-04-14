@@ -83,18 +83,36 @@ class Vessel
         end
         return count      
     end
-#Sort--------------------------------------------------------------
+#Sort---------------------------------------------------------------------
     def sort_data_ASC
         return @list.sort_by! {|item| item.get_last_ais_updated_at}
     end
     def sort_data_DESC
         return @list.sort! {|item1, item2| item2.get_last_ais_updated_at<=>item1.get_last_ais_updated_at}
     end
+#Group--------------------------------------------------------------------
+    def group_by_day
+        @list.sort_by! {|item| item.get_last_ais_updated_at}
+        a = Array.new
+        b = Array.new
+        b = [@list[0].get_last_ais_updated_at.slice(0..9),@list[0]]
+        for i in 1..@list.length-1
+            if @list[i].get_last_ais_updated_at.slice(0..9) == @list[i-1].get_last_ais_updated_at.slice(0..9)
+                b.push(@list[i])
+            else
+                a.push(b)
+                b = Array.new
+                b = [@list[i].get_last_ais_updated_at.slice(0..9),@list[i]]
+            end
+        end
+        return a
+    end
+
 #Save velocity to CSV-----------------------------------------------------
     def save_velocity
         csv = CSV.open("velocity.csv", "wb")
         csv << ["id", "velocity"]
-        for i in 0..@list.length-1
+        for i in 0..@list.length-2
             velocity = calculate_velocity(@list[i].get_point, @list[i+1].get_point)
             csv << [@list[i].get_id, velocity]
         end
@@ -147,3 +165,15 @@ puts "Method calculate velocity---------------------------"
 puts ves.calculate_velocity(Point.new(29.75863833,32.55569,"2021-04-06 23:25:25"),Point.new(29.75877167,32.55574333,"2021-04-06 23:34:25"))
 
 puts ves.save_velocity
+
+
+puts "Group by day---------------------------"
+ves = Vessel.new
+a = ves.group_by_day
+a.each do |item|
+    puts "--------------------------" + item[0].to_s + "------------------------------"
+    for i in 1..item.length-1
+        print item[i].toS
+    end
+end
+
